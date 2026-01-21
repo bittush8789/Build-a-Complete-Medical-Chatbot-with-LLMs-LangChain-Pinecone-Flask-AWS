@@ -1,4 +1,4 @@
-# Creating directory 
+## Creating directory 
 mkdir -p src
 mkdir -p research 
 
