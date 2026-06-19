@@ -1,0 +1,64 @@
+name: EKS GitOps CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'eks/**'
+      - 'app.py'
+      - 'Dockerfile'
+      - 'src/**'
+      - 'requirements.txt'
+
+jobs:
+  build-and-update-gitops:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # 2. Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # 3. Log in to Amazon ECR
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 4. Build and Tag Docker image
+      - name: Build, Tag and Push Docker Image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      # 5. GitOps Update: Modify EKS Deployment manifest with the new image tag
+      - name: Update Deployment Manifest
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Use sed to replace placeholder with the newly built ECR image tag
+          sed -i "s|image: REPLACE_WITH_ECR_REGISTRY/medical-chatbot:latest|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" eks/deployment.yaml
+
+      # 6. Push changes back to GitHub to trigger ArgoCD auto-sync
+      - name: Commit and Push Manifest Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add eks/deployment.yaml
+          git commit -m "gitops: Auto-update EKS Deployment image tag to ${{ github.sha }} [skip ci]"
+          git push origin main

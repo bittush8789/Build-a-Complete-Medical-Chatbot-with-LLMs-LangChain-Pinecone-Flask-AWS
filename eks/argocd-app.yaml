@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: medical-chatbot-eks-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # ArgoCD reads the configurations from your repo
+    repoURL: 'https://github.com/bittush8789/Build-a-Complete-Medical-Chatbot-with-LLMs-LangChain-Pinecone-Flask-AWS.git'
+    targetRevision: HEAD
+    path: eks
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: medical-chatbot-eks
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
