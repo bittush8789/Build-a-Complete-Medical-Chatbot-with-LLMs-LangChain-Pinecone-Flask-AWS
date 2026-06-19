@@ -78,9 +78,21 @@ graph LR
 ```text
 ├── .github/
 │   └── workflows/
-│       └── deploy.yml          # GitHub Actions CI/CD Pipeline
+│       ├── deploy.yml          # GitHub Actions CI/CD Pipeline (Kind/EC2)
+│       └── eks-gitops.yml      # EKS GitOps Auto-Sync CI Pipeline
 ├── data/                       # Raw source documents (PDFs)
-├── k8s/                        # Production Kubernetes manifests
+├── eks/                        # Production EKS & ArgoCD GitOps manifests
+│   ├── argocd-app.yaml         # ArgoCD App definition pointing to EKS
+│   ├── configmap.yaml          # EKS configuration parameters
+│   ├── deployment.yaml         # App Pod specs for AWS EKS deployment
+│   ├── eksctl-config.yaml      # Provisioning configuration for eksctl
+│   ├── hpa.yaml                # Autoscaling rule for EKS pods
+│   ├── ingress.yaml            # Ingress rule configured with AWS ALB Ingress annotations
+│   ├── namespace.yaml          # isolated namespace declaration for EKS
+│   ├── README.md               # Dedicated AWS EKS & GitOps deployment guide
+│   ├── secret.yaml             # API Credentials placeholders for EKS
+│   └── service.yaml            # NodePort service compatible with AWS ALB
+├── k8s/                        # Production Kubernetes manifests (Kind)
 │   ├── configmap.yaml          # Non-sensitive runtime variables
 │   ├── deployment.yaml         # App Pod specifications, replicas, health probes
 │   ├── hpa.yaml                # Horizontal Pod Autoscaler policies
