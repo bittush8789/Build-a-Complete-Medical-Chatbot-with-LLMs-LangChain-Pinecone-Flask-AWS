@@ -1,3 +1,4 @@
+# Kubernetes Service Manifest to internally expose the backend pods
 apiVersion: v1
 kind: Service
 metadata:
@@ -7,10 +8,13 @@ metadata:
     app: medical-chatbot
 spec:
   ports:
-  - port: 80
-    targetPort: 8080
+  - port: 80          # Service port exposed inside cluster
+    targetPort: 8080  # Container port to route the traffic to
     protocol: TCP
     name: http
+  # Direct network calls to pods tagged with label "app: medical-chatbot"
   selector:
     app: medical-chatbot
+  # Use ClusterIP for secure, internal load balancing inside K8s network
   type: ClusterIP
+

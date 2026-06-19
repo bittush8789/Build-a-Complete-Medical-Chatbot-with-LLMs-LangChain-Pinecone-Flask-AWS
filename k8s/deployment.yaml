@@ -1,3 +1,4 @@
+# Kubernetes Deployment Manifest for the Medical Chatbot app
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,12 +7,14 @@ metadata:
   labels:
     app: medical-chatbot
 spec:
+  # Maintain high availability with 2 running instances
   replicas: 2
+  # Strategy for updating pods with zero-downtime
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+      maxSurge: 1       # Create 1 new pod before killing old ones
+      maxUnavailable: 0 # Ensure 100% target capacity is available during deploy
   selector:
     matchLabels:
       app: medical-chatbot
@@ -27,16 +30,19 @@ spec:
         ports:
         - containerPort: 8080
           name: http
+        # Limit resource usage to prevent cluster starvation
         resources:
           requests:
-            cpu: 250m
-            memory: 256Mi
+            cpu: 250m     # Initial request of 0.25 vCPU
+            memory: 256Mi # Initial request of 256MB RAM
           limits:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 500m     # Hard limit of 0.5 vCPU
+            memory: 512Mi # Hard limit of 512MB RAM
+        # Source non-sensitive variables from ConfigMap
         envFrom:
         - configMapRef:
             name: medical-chatbot-config
+        # Source sensitive credentials from Kubernetes Secrets
         env:
         - name: OPENAI_API_KEY
           valueFrom:
@@ -53,6 +59,7 @@ spec:
             secretKeyRef:
               name: medical-chatbot-secrets
               key: LANGCHAIN_API_KEY
+        # Probe to check if the app needs to be restarted
         livenessProbe:
           httpGet:
             path: /health
@@ -60,6 +67,7 @@ spec:
           initialDelaySeconds: 45
           periodSeconds: 20
           timeoutSeconds: 5
+        # Probe to check if the app is ready to serve network traffic
         readinessProbe:
           httpGet:
             path: /health
@@ -67,3 +75,4 @@ spec:
           initialDelaySeconds: 45
           periodSeconds: 10
           timeoutSeconds: 5
+

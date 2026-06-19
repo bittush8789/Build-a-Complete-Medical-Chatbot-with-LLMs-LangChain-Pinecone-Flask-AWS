@@ -1,5 +1,6 @@
 name: CI/CD Deployment to AWS & Kubernetes (Kind)
 
+# Trigger this deployment workflow automatically on pushing changes to the main branch
 on:
   push:
     branches:
@@ -7,9 +8,10 @@ on:
 
 jobs:
   build-and-deploy:
+    # Run the orchestration runner on the latest Ubuntu image provided by GitHub Actions
     runs-on: ubuntu-latest
     steps:
-      # 1. Checkout
+      # 1. Checkout the source code from git repository
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
