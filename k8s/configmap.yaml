@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medical-chatbot-config
+  namespace: medical-chatbot
+data:
+  LANGCHAIN_TRACING_V2: "true"
+  LANGCHAIN_PROJECT: "medical-chatbot"
+  FLASK_ENV: "production"
